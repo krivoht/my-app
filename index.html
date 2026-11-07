@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Kalorie" />
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
+    <title>Kalorie</title>
+  </head>
+  <body>
+    <header class="topbar">
+      <h1>Kalorie</h1>
+      <button id="settings-btn" class="icon-btn" aria-label="Nastavení">⚙︎</button>
+    </header>
+
+    <main>
+      <!-- Přehled dne -->
+      <section id="day-view">
+        <div class="day-nav">
+          <button id="prev-day" class="icon-btn" aria-label="Předchozí den">‹</button>
+          <div id="day-label" class="day-label"></div>
+          <button id="next-day" class="icon-btn" aria-label="Další den">›</button>
+        </div>
+
+        <div class="summary card">
+          <div class="summary-main">
+            <span id="total-kcal" class="big">0</span>
+            <span class="muted">/ <span id="goal-kcal">2000</span> kcal</span>
+          </div>
+          <div class="progress"><div id="progress-bar"></div></div>
+          <div class="macros">
+            <div><span id="sum-protein">0</span> g<small>bílkoviny</small></div>
+            <div><span id="sum-carbs">0</span> g<small>sacharidy</small></div>
+            <div><span id="sum-fat">0</span> g<small>tuky</small></div>
+          </div>
+        </div>
+
+        <ul id="entry-list" class="entry-list"></ul>
+        <p id="empty-day" class="muted center">Zatím nic. Vyfoťte jídlo tlačítkem dole.</p>
+      </section>
+
+      <!-- Přidání jídla -->
+      <section id="add-view" hidden>
+        <div class="card">
+          <label class="photo-pick" id="photo-pick">
+            <input id="photo-input" type="file" accept="image/*" capture="environment" hidden />
+            <img id="photo-preview" alt="" hidden />
+            <span id="photo-placeholder">📷 Vyfotit jídlo</span>
+          </label>
+          <button id="photo-library" class="link-btn" type="button">nebo vybrat z galerie</button>
+          <label class="field">
+            <span>Upřesnění (nepovinné)</span>
+            <textarea id="note-input" rows="3" placeholder="např. 200 g rýže, smažené na másle, snědl jsem polovinu"></textarea>
+          </label>
+          <div class="row">
+            <button id="cancel-add" class="btn secondary" type="button">Zrušit</button>
+            <button id="analyze-btn" class="btn primary" type="button">Spočítat kalorie</button>
+          </div>
+          <p id="add-error" class="error" hidden></p>
+        </div>
+
+        <div id="result" class="card" hidden>
+          <label class="field">
+            <span>Název</span>
+            <input id="result-name" type="text" />
+          </label>
+          <table class="items">
+            <thead><tr><th>Položka</th><th>g</th><th>kcal</th></tr></thead>
+            <tbody id="result-items"></tbody>
+          </table>
+          <label class="field">
+            <span>Celkem kcal (můžete upravit)</span>
+            <input id="result-kcal" type="number" inputmode="numeric" min="0" />
+          </label>
+          <p id="result-note" class="muted"></p>
+          <div class="row">
+            <button id="retry-btn" class="btn secondary" type="button">Znovu</button>
+            <button id="save-btn" class="btn primary" type="button">Uložit</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Nastavení -->
+      <section id="settings-view" hidden>
+        <div class="card">
+          <label class="field">
+            <span>Anthropic API klíč</span>
+            <input id="api-key" type="password" autocomplete="off" placeholder="sk-ant-..." />
+            <small class="muted">Uloží se jen v tomto zařízení. Klíč získáte na console.anthropic.com.</small>
+          </label>
+          <label class="field">
+            <span>Model</span>
+            <select id="model-select"></select>
+          </label>
+          <label class="field">
+            <span>Denní cíl (kcal)</span>
+            <input id="goal-input" type="number" inputmode="numeric" min="500" step="50" />
+          </label>
+          <div class="row">
+            <button id="close-settings" class="btn secondary" type="button">Zavřít</button>
+            <button id="save-settings" class="btn primary" type="button">Uložit</button>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Záloha dat</h2>
+          <div class="row">
+            <button id="export-btn" class="btn secondary" type="button">Exportovat</button>
+            <label class="btn secondary">
+              Importovat
+              <input id="import-input" type="file" accept="application/json" hidden />
+            </label>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <button id="add-btn" class="fab" aria-label="Přidat jídlo">＋</button>
+    <input id="library-input" type="file" accept="image/*" hidden />
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
