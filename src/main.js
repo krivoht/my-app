@@ -62,6 +62,8 @@ function renderDay() {
   $("sum-carbs").textContent = round(sum.carbs);
   $("sum-fat").textContent = round(sum.fat);
 
+  renderMacroChart(sum);
+
   const pct = settings.goal > 0 ? (sum.kcal / settings.goal) * 100 : 0;
   const bar = $("progress-bar");
   bar.style.width = `${Math.min(100, pct)}%`;
@@ -120,6 +122,110 @@ function renderDay() {
     list.append(li);
   }
   $("empty-day").hidden = entries.length > 0;
+}
+
+// ---------- Koláčový graf makroživin ----------
+const SVG_NS = "http://www.w3.org/2000/svg";
+const MACROS = [
+  { key: "protein", name: "Bílkoviny", kcalPerG: 4 },
+  { key: "carbs", name: "Sacharidy", kcalPerG: 4 },
+  { key: "fat", name: "Tuky", kcalPerG: 9 },
+];
+let activeMacro = null;
+let lastMacroData = null;
+
+function arcPath(cx, cy, rOuter, rInner, start, end) {
+  const pt = (r, a) => [cx + r * Math.sin(a), cy - r * Math.cos(a)];
+  const large = end - start > Math.PI ? 1 : 0;
+  const [x1, y1] = pt(rOuter, start);
+  const [x2, y2] = pt(rOuter, end);
+  const [x3, y3] = pt(rInner, end);
+  const [x4, y4] = pt(rInner, start);
+  return `M${x1} ${y1}A${rOuter} ${rOuter} 0 ${large} 1 ${x2} ${y2}L${x3} ${y3}A${rInner} ${rInner} 0 ${large} 0 ${x4} ${y4}Z`;
+}
+
+// Zaokrouhlí procenta tak, aby dávala dohromady přesně 100 (metoda největšího zbytku).
+function roundedPercents(values, total) {
+  const keys = Object.keys(values);
+  if (total <= 0) return Object.fromEntries(keys.map((k) => [k, 0]));
+  const raw = keys.map((k) => ({ k, v: (values[k] / total) * 100 }));
+  const out = Object.fromEntries(raw.map(({ k, v }) => [k, Math.floor(v)]));
+  let rest = 100 - Object.values(out).reduce((a, b) => a + b, 0);
+  for (const { k } of [...raw].sort((a, b) => (b.v % 1) - (a.v % 1))) {
+    if (rest-- <= 0) break;
+    out[k] += 1;
+  }
+  return out;
+}
+
+function svgEl(tag, attrs, text) {
+  const el = document.createElementNS(SVG_NS, tag);
+  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, v);
+  if (text != null) el.textContent = text;
+  return el;
+}
+
+function renderMacroChart(sum) {
+  const grams = { protein: sum.protein, carbs: sum.carbs, fat: sum.fat };
+  const kcal = Object.fromEntries(MACROS.map((m) => [m.key, grams[m.key] * m.kcalPerG]));
+  const total = Object.values(kcal).reduce((a, b) => a + b, 0);
+  const pct = roundedPercents(kcal, total);
+  lastMacroData = { grams, pct, total };
+
+  for (const m of MACROS) {
+    $(`pct-${m.key}`).textContent = total > 0 ? `${pct[m.key]} %` : "–";
+  }
+
+  const svg = $("macro-chart");
+  for (const el of [...svg.children]) if (el.tagName !== "title") el.remove();
+
+  const C = 60, R = 56, r = 36;
+  if (total <= 0) {
+    svg.append(svgEl("circle", { class: "track", cx: C, cy: C, r: (R + r) / 2, "stroke-width": R - r }));
+    activeMacro = null;
+  } else {
+    let angle = 0;
+    for (const m of MACROS) {
+      const share = kcal[m.key] / total;
+      if (share <= 0) continue;
+      // Celý kruh nejde nakreslit jedním obloukem, proto těsně pod 2π.
+      const end = share >= 0.9999 ? angle + Math.PI * 2 - 0.0001 : angle + share * Math.PI * 2;
+      const path = svgEl("path", { d: arcPath(C, C, R, r, angle, end), "data-macro": m.key });
+      path.append(svgEl("title", {}, `${m.name}: ${Math.round(grams[m.key])} g · ${pct[m.key]} %`));
+      path.addEventListener("click", () => setActiveMacro(m.key));
+      svg.append(path);
+      angle = end;
+    }
+  }
+  updateMacroHighlight();
+}
+
+function setActiveMacro(key) {
+  activeMacro = activeMacro === key ? null : key;
+  updateMacroHighlight();
+}
+
+function updateMacroHighlight() {
+  const svg = $("macro-chart");
+  const data = lastMacroData;
+  const active = data && data.total > 0 ? activeMacro : null;
+  svg.classList.toggle("has-active", !!active);
+  for (const p of svg.querySelectorAll("path")) p.classList.toggle("active", p.dataset.macro === active);
+  for (const li of document.querySelectorAll(".macro-legend li")) {
+    li.classList.toggle("active", li.dataset.macro === active);
+  }
+  for (const t of svg.querySelectorAll("text")) t.remove();
+  if (!data || data.total <= 0) {
+    svg.append(svgEl("text", { class: "center-lbl", x: 60, y: 64, "text-anchor": "middle" }, "žádná data"));
+  } else if (active) {
+    const m = MACROS.find((x) => x.key === active);
+    svg.append(svgEl("text", { class: "center-val", x: 60, y: 62, "text-anchor": "middle" }, `${data.pct[active]} %`));
+    svg.append(svgEl("text", { class: "center-lbl", x: 60, y: 76, "text-anchor": "middle" }, m.name.toLowerCase()));
+  }
+}
+
+for (const li of document.querySelectorAll(".macro-legend li")) {
+  li.addEventListener("click", () => setActiveMacro(li.dataset.macro));
 }
 
 $("prev-day").addEventListener("click", () => {

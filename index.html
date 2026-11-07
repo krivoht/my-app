@@ -35,10 +35,31 @@
           </div>
           <div class="progress"><div id="progress-bar"></div></div>
           <div class="macros">
-            <div><span id="sum-protein">0</span> g<small>bílkoviny</small></div>
-            <div><span id="sum-carbs">0</span> g<small>sacharidy</small></div>
-            <div><span id="sum-fat">0</span> g<small>tuky</small></div>
+            <svg id="macro-chart" class="macro-chart" viewBox="0 0 120 120" role="img" aria-labelledby="macro-chart-title">
+              <title id="macro-chart-title">Podíl makroživin na energii</title>
+            </svg>
+            <ul class="macro-legend">
+              <li data-macro="protein">
+                <span class="swatch"></span>
+                <span class="macro-name">Bílkoviny</span>
+                <span class="macro-val"><span id="sum-protein">0</span> g</span>
+                <span class="macro-pct" id="pct-protein">–</span>
+              </li>
+              <li data-macro="carbs">
+                <span class="swatch"></span>
+                <span class="macro-name">Sacharidy</span>
+                <span class="macro-val"><span id="sum-carbs">0</span> g</span>
+                <span class="macro-pct" id="pct-carbs">–</span>
+              </li>
+              <li data-macro="fat">
+                <span class="swatch"></span>
+                <span class="macro-name">Tuky</span>
+                <span class="macro-val"><span id="sum-fat">0</span> g</span>
+                <span class="macro-pct" id="pct-fat">–</span>
+              </li>
+            </ul>
           </div>
+          <p class="macro-caption muted">Podíl na energii (kcal) z makroživin</p>
         </div>
 
         <ul id="entry-list" class="entry-list"></ul>
